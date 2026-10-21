@@ -26,7 +26,7 @@ class _GeometryMixin:
                           numbers don't fall inward as much as larger numbers. Too large,
                           and you lose everything!
             
-            From: https://gist.github.com/dwyerk/10561690
+            This snippet is from: https://gist.github.com/dwyerk/10561690
             
             """
             if len(points.geoms) < 4:
@@ -91,15 +91,12 @@ class _GeometryMixin:
 
     def create_roi_towards_away_inside_angle(self, roi, buffer=False):
         '''
-        Given a ROI, determine whether a displacement in a trajectory is moving
-        towards, away or is inside (i.e., both points are inside) the roi.
-        
-        The angular output is the intuitive angle, where 180 deg is a 180 deg turn,
-        and 0 deg is continueing on a straight line
+        given a ROI, determine whether a displacement in a trajectory is moving towards, away or is inside (i.e., both points are inside) the roi.
+        roi; a solid polygon (no holes).
+        buffer; boolean, whether to consider a buffer around the roi
 
-        Returns
-        -------
-        None.
+        creates a dataframe (RTAIangle) that contains information about the angle of the displacement and whether it is moving towards, away or inside the roi
+        angular output is the intuitive angle, where 180 deg is a 180 deg turn, and 0 deg is continueing on a straight line
 
         '''
         # create a data frame, for each displacement decide if inside, towards or away a roi
@@ -129,30 +126,14 @@ class _GeometryMixin:
                                   how='left').explode(['Angle_r', 'roi_towards_away', 'x', 'y'], ignore_index=True)
         self.RTAIangle['Angle_deg'] = 180 - self.RTAIangle.Angle_r.apply(math.degrees)
         
-        
-        # determine if a roi contains the points
+        # determine if a roi contains the points (note, this applies to the whole buffered region, so if its inside the buffer its inside the original roi)
         if buffer != False:
             roi_buffed = shapelybuffer(roi, buffer)
-            
             self.RTAIangle['in_buffer'] = np.array(list(map(lambda point: roi_buffed.contains(Point(point)), np.array(self.RTAIangle[['x', 'y']])))) * -2 + 1
 
     def calc_roi_towards_away_inside(self, trj, roi):
         '''
         usage for create_roi_towards_away_inside_angle
-
-        Parameters
-        ----------
-        trj : TYPE
-            DESCRIPTION.
-        roi : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        roi_towards_away : TYPE
-            DESCRIPTION.
-        consecutive_in_array : TYPE
-            DESCRIPTION.
 
         '''
         
@@ -190,20 +171,9 @@ class _GeometryMixin:
 
     def create_buffer_end_in_or_end_out(self, roi, buffer):
         '''
-        Given a ROI, find all trajectories that initially start in a buffer region outside the ROI.
-        Then find the percentage of trajectories that end inside the ROI, in the buffer region outside of the ROI, and outside the buffer
-        region of the ROI.
-
-        Parameters
-        ----------
-        roi : TYPE
-            DESCRIPTION.
-        buffer : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
+        given a ROI, find all trajectories that initially start in a buffer region outside the ROI.
+        then find the percentage of trajectories that end inside the ROI, in the buffer region outside of the ROI, and outside the buffer region of the ROI.
+        returns a dictionary o_dict
 
         '''
         
@@ -238,7 +208,10 @@ class _GeometryMixin:
         return o_dict
 
     def create_displacement_vector(self):
-        ''' for each trajectory, calculate the displacement between each step and return dictionary'''
+        '''
+        for each trajectory, calculate the displacement between each step and return dictionary
+        
+        '''
         
         self.displacement_vector_dict = {}
         
@@ -254,19 +227,9 @@ class _GeometryMixin:
 
     def create_displacementinfo_vector(self, roi, ax=None, **kwargs):
         '''
-        For each trajectory, calculate the displacement between each step, and return dictionary,
-        additionally returns disctionary regarding whether both points of the step are within a ROI;
+        for each trajectory, calculate the displacement between each step, and return dictionary, additionally returns disctionary regarding whether both points of the step are within a ROI;
         True; at least on point was in the ROI
         False; neither points were in the ROI
-
-        Parameters
-        ----------
-        roi : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
 
         '''
         

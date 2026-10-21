@@ -1,11 +1,32 @@
 # -*- coding: utf-8 -*-
 
 import copy
+import warnings
 import numpy as np
 import pandas as pd
 
 
 class _IOMixin:
+
+    def _check_and_sort_data(self):
+        order = pd.MultiIndex.from_frame(self.data[['tr', 't']])
+        if not order.is_monotonic_increasing:
+            warnings.warn(
+                'Trajectory data is not ordered by trajectory ID and time; sorting it.',
+                UserWarning,
+                stacklevel=2,
+            )
+            self.data.sort_values(by=['tr', 't'], kind='stable', inplace=True)
+        self.data.reset_index(drop=True, inplace=True)
+
+        time_gaps = self.data.groupby('tr', sort=False)['t'].diff() > 1
+        if time_gaps.any():
+            trajectories = self.data.loc[time_gaps, 'tr'].unique().tolist()
+            warnings.warn(
+                f'Missing timesteps detected in trajectories: {trajectories}.',
+                UserWarning,
+                stacklevel=2,
+            )
 
     def import_trc(self, fname, pixel_size):
         '''
@@ -17,6 +38,7 @@ class _IOMixin:
         self.data['x'] = trcDF['CentroidX(px)'] * pixel_size
         self.data['y'] = trcDF['CentroidY(px)'] * pixel_size
         self.data['t'] =  trcDF['Plane']
+        self._check_and_sort_data()
 
     def import_trxyframe(self, fname):
         '''
@@ -25,6 +47,7 @@ class _IOMixin:
         '''
         self.data = pd.read_csv(fname, delimiter=' ', header=None)
         self.data.columns = ['tr', 'x', 'y', 't']
+        self._check_and_sort_data()
 
     def import_trxytime(self, fname, DT):
         '''
@@ -35,6 +58,7 @@ class _IOMixin:
         self.data = pd.read_csv(fname, delimiter=' ', header=None)
         self.data.columns = ['tr', 'x', 'y', 't']
         self.data['t'] = np.round(self.data['t'] / DT).astype('int')
+        self._check_and_sort_data()
 
     def import_straight(self, trj_vec, x_vec_um, y_vec_um, t_vec):
         '''
@@ -45,6 +69,7 @@ class _IOMixin:
         self.data['x'] = x_vec_um
         self.data['y'] = y_vec_um
         self.data['t'] =  t_vec
+        self._check_and_sort_data()
 
     def import_trackmatecsv(self, fname):
         '''
@@ -55,12 +80,12 @@ class _IOMixin:
         print('importing trackmate.csv data...')
         self.data = pd.read_csv(fname, skiprows=[0, 1, 3], encoding='unicode_escape')
         self.data = self.data[['Track ID', 'X', 'Y', 'Frame']]
-        self.data.sort_values(by=['Track ID', 'Frame'], axis=0, ascending=True, inplace=True)
         self.data.rename(columns={'Track ID': 'tr',
                                   'X': 'x',
                                   'Y': 'y',
                                   'Frame': 't'},
                         inplace=True)
+        self._check_and_sort_data()
 
     def import_trackmatecsv_v520(self, fname):
         '''
@@ -78,7 +103,7 @@ class _IOMixin:
                          inplace=True)
         self.data = self.data.mask(self.data.eq('None')).dropna()
         self.data['tr'] = self.data['tr'].astype('int')
-        self.data.sort_values(by=['tr', 't'], axis=0, ascending=True, inplace=True)
+        self._check_and_sort_data()
 
     def export_trxyframe(self, fname):
         '''

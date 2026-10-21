@@ -34,7 +34,6 @@ class _PlottingMixin:
         
         cmap = plt.get_cmap(cmap)
             
-
         if sample_num == None:
             data_to_plot = self.data
         else:
@@ -47,7 +46,6 @@ class _PlottingMixin:
         if color_by_time:
             
             # create a cmap
-            
             if DT == None and fix_frames == None:
                 norm = mplcolors.Normalize(vmin=data_to_plot['t'].min(),
                                            vmax=data_to_plot['t'].max(),
@@ -55,11 +53,9 @@ class _PlottingMixin:
                 maximum_time = data_to_plot['t'].max()
                 
             elif fix_frames != None:
-                
                 norm = mplcolors.Normalize(vmin=fix_frames[0],
                                            vmax=fix_frames[1],
                                            clip=False)
-                
                 maximum_time = fix_frames[1]
                 
             else:
@@ -451,20 +447,8 @@ class _PlottingMixin:
 
     def plot_countfreq(self, ax, **kwargs):
         '''
+        plots frequency distribution for trajectory lengths
         reqires; countDF
-        function; plots frequency distribution for trajectory lengths
-        
-        
-        Parameters
-        ----------
-        ax : matplotlib.axes
-            axes to plot countfreq data onto.
-            
-        bins : number of bins
-
-        Returns
-        -------
-        None.
 
         '''
         

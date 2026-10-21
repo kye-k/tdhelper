@@ -23,7 +23,7 @@ import copy
 import cmocean
 # import napari
 from skimage import io
-import pytrackmate
+# import pytrackmate
 import math
 from scipy.stats import gaussian_kde
 from scipy.stats import linregress
@@ -107,16 +107,16 @@ class TrajectoryData:
         self.data.columns = ['tr', 'x', 'y', 't']
         self.data['t'] = np.round(self.data['t'] / DT).astype('int')
         
-    def import_trackmatexml(self, fname):
-        print('importing xml data... (this may take time)')
-        df = pytrackmate.trackmate_peak_import(fname, get_tracks=True)
-        df = df.sort_values(by=['label', 't_stamp'])
-        self.data['tr'] = df['label'].astype('int')
-        self.data['x'] = df['x']
-        self.data['y'] = df['y']
-        self.data['t'] = df['t_stamp'].astype('int')
+    # def import_trackmatexml(self, fname):
+    #     print('importing xml data... (this may take time)')
+    #     df = pytrackmate.trackmate_peak_import(fname, get_tracks=True)
+    #     df = df.sort_values(by=['label', 't_stamp'])
+    #     self.data['tr'] = df['label'].astype('int')
+    #     self.data['x'] = df['x']
+    #     self.data['y'] = df['y']
+    #     self.data['t'] = df['t_stamp'].astype('int')
         
-        self.extra_data = df
+    #     self.extra_data = df
 
     def import_straight(self, trj_vec, x_vec_um, y_vec_um, t_vec):
         self.data['tr'] = trj_vec

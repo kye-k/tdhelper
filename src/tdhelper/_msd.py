@@ -2,6 +2,7 @@
 
 from scipy.stats import linregress
 from scipy.stats import sem
+from scipy.integrate import trapezoid
 import math
 import numpy as np
 
@@ -10,7 +11,7 @@ class _MSDMixin:
 
     def calcMsd(self, trj):
         '''
-        Function to calculate the MSD curve for a given trajectory.
+        function to calculate the MSD curve for a given trajectory
 
         '''
         
@@ -25,7 +26,7 @@ class _MSDMixin:
 
     def calc_mean_msd(self):
         '''
-        fucntion: calculates mean msd values (requires msd_list prior)
+        function to calculatee mean msd values (requires msd_list prior)
         
         '''
         
@@ -47,8 +48,7 @@ class _MSDMixin:
 
     def calc_MSD(self, dictionary_output = False):
         '''
-        Wrapper to calculate the MSD curve for each trajectory, stored
-        within msd_list.
+        wrapper to calculate the MSD curve for each trajectory, stored within msd_list
 
         '''
         
@@ -65,14 +65,16 @@ class _MSDMixin:
             return msd_dict
 
     def calc_msdauc(self, p1, p2, DT):
+        '''
+        integrates the mean MSD values from index p1 up to, but not including, index p2, using DT as the spacing between samples.
+        '''
         
-        self.msdauc = np.trapz(self.msd_mean_values[p1:p2], dx=DT)
-        print('msd_auc has been calculated from {} to {}, note unit is in (s)'.format(p1, p2 - 1))
+        self.msdauc = trapezoid(self.msd_mean_values[p1:p2], dx=DT)
+        print('msd_auc has been calculated from {} to {}'.format(p1, p2 - 1))
 
     def calc_diffusion_coefficient(self, DT, fit_len = 4, dimensions = 2):
         '''
-        Calculates the diffusion coefficient for each trajectory via
-        performing linear regression on its MSD curve.
+        calculates the diffusion coefficient for each trajectory via performing linear regression on its MSD curve.
         
         Parameters
         ----------
@@ -104,13 +106,12 @@ class _MSDMixin:
         self.diff_dict = diff_dict
         self.difflog_dict = difflog_dict
         
-        
         self.diff_list = np.array(list(diff_dict.values()))
         self.difflog_list = np.array(list(difflog_dict.values()))
 
     def calc_immobile_fraction(self, dcoef_thresh):
         '''
-        Determines the proportion (0 to 1) of molecules classified as 'immobile' based on threshold
+        determines the proportion (0 to 1) of molecules classified as 'immobile' based on threshold
         
         '''
         
