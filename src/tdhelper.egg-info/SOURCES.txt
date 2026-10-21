@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+src/tdhelper/TrajectoryDataHelper_v7.py
+src/tdhelper/__init__.py
+src/tdhelper/core.py
+src/tdhelper.egg-info/PKG-INFO
+src/tdhelper.egg-info/SOURCES.txt
+src/tdhelper.egg-info/dependency_links.txt
+src/tdhelper.egg-info/requires.txt
+src/tdhelper.egg-info/top_level.txt

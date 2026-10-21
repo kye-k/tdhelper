@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: tdhelper
+Version: 0.1.0
+Requires-Dist: pandas>=2.2.3
+Requires-Dist: numpy>=1.26.4
+Requires-Dist: matplotlib>=3.7.1
+Requires-Dist: seaborn>=0.13.2
+Requires-Dist: scipy>=1.13.1
+Requires-Dist: cmocean>=3.0.3
+Requires-Dist: scikit-image>=0.24.0
+Requires-Dist: plotly>=5.14.1
+Requires-Dist: shapely>=2.0.1
