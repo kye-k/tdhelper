@@ -206,6 +206,7 @@ class _PlottingMixin:
         cbar = kwargs.pop('cbar', True)
         vmin = kwargs.pop('vmin', -5)
         vmax = kwargs.pop('vmax', 1)
+        save_cbar = kwargs.pop('save_cbar', None)
         
         # get data
         data_to_plot = copy.deepcopy(self.data)
@@ -225,7 +226,17 @@ class _PlottingMixin:
             ax.plot(df['x'], df['y'], color=cmap(norm(dcoef)), **kwargs)
         
         if cbar:
-            cbar = ax.figure.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap))
+
+            cfig = plt.figure(figsize=(0.2, 0.5))
+            cax = cfig.add_axes([0.3, 0.05, 0.3, 0.9])
+            cbar = cax.figure.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax)
+            tick_locator = ticker.MaxNLocator(nbins=5)
+            cbar.locator = tick_locator
+            cbar.update_ticks()
+            cbar.set_label(r'$\mathrm{Log_{10}[D_{app}] (\mu m^2/s}$)')
+            
+            if save_cbar != None:
+                cfig.savefig(save_cbar)
 
         ax.set_aspect('equal')
 
