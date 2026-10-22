@@ -7,6 +7,8 @@
 
 As of now, `tdhelper` has very simple functions, contributions to enhance use and include more functions are more than welcome! The goal `tdhelper` is to have an open-source simple API and to make SPT analyses (from trajectories to figures) accessible and reproducible without the need of a GUI.
 
+See `example_notebook.ipynb` for example use of `tdhelper`.
+
 ## Install 
 
 ```
