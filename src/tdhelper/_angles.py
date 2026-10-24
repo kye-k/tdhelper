@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import cmocean
 import math
 import numpy as np
 import pandas as pd
@@ -8,7 +7,7 @@ import pandas as pd
 
 class _AngleMixin:
 
-    def create_angleDF(self, startend = False):
+    def create_angleDF(self, countDF, startend = False, startendDF = None):
         '''
         creates a dataframe (angleDF) that contains the angular DIRECTION for each segment in a trajectory;
         if startend == True, then the angleDF reports the angulare DIRECTION for the whole trajectory;
@@ -21,17 +20,20 @@ class _AngleMixin:
                 trj_dict[trj] = self.data[self.data['tr'] == trj][['x', 'y']].values
         
         else:
+            if startendDF is None:
+                raise ValueError("startendDF is required when startend=True.")
             for trj in self.data['tr'].unique():
-                trj_dict[trj] = self.startendDF[self.startendDF['tr'] == trj][['x', 'y']].values
+                trj_dict[trj] = startendDF[startendDF['tr'] == trj][['x', 'y']].values
         
         angles = [self.calc_angle_of_direction(trj_dict[trj]) for trj in trj_dict]
         idx = trj_dict.keys()
 
-        self.angleDF = pd.merge(pd.DataFrame({'tr': idx, 'Angle': angles}),
-                                self.countDF, left_on='tr', right_on='tr', how='left') \
+        angleDF = pd.merge(pd.DataFrame({'tr': idx, 'Angle': angles}),
+                                countDF, left_on='tr', right_on='tr', how='left') \
             .explode('Angle', ignore_index=True)
+        return angleDF
 
-    def create_stepwiseangleDF(self):
+    def create_stepwiseangleDF(self, countDF):
         '''
         creates a dataframe (angleswDF) that contains the stepwise change in angle for each triplet of points in a trajectory;
         in the current implementation, 180 degrees is the "forward, straight motion" direction, and 0 degrees is the "reversing, backward motion" direction;
@@ -47,26 +49,24 @@ class _AngleMixin:
         angles = [self.calc_stepwise_angle(trj_dict[trj]) for trj in trj_dict]
         idx = trj_dict.keys()
 
-        self.angleswDF = pd.merge(pd.DataFrame({'tr': idx, 'Angle_r': angles}), self.countDF, left_on='tr', right_on='tr', how='left').explode('Angle_r', ignore_index=True)
-        self.angleswDF['Angle_deg'] = self.angleswDF.Angle_r.apply(math.degrees)
+        angleswDF = pd.merge(pd.DataFrame({'tr': idx, 'Angle_r': angles}), countDF, left_on='tr', right_on='tr', how='left').explode('Angle_r', ignore_index=True)
+        angleswDF['Angle_deg'] = angleswDF.Angle_r.apply(math.degrees)
+        return angleswDF
 
-    def create_stepwiseangleDFFrequency(self, bins):
+    def create_stepwiseangleDFFrequency(self, angleswDF, bins):
         '''
         creates a dataframe (angleswfreqDF) that contains the relative frequency histogram for the stepwise change in angle;
 
         '''
         
-        if not hasattr(self, 'angleswDF'):
-            self.create_stepwiseangleDF()
-            
-        bin_vals, bin_edges = np.histogram(self.angleswDF['Angle_deg'], bins=bins, range=(0, 180))
-        bin_vals = bin_vals / len(self.angleswDF['Angle_deg'])
+        bin_vals, bin_edges = np.histogram(angleswDF['Angle_deg'], bins=bins, range=(0, 180))
+        bin_vals = bin_vals / len(angleswDF['Angle_deg'])
         bin_centers = 0.5*(bin_edges[1:]+bin_edges[:-1])
         
-        self.angleswfreqDF = pd.DataFrame({'angle_value': bin_centers,
-                                           'angle_density': bin_vals})
+        return pd.DataFrame({'angle_value': bin_centers,
+                             'angle_density': bin_vals})
 
-    def create_stepwiseangleskipDF(self, skip=2):
+    def create_stepwiseangleskipDF(self, countDF, skip=2):
         '''
         creates a dataframe (angleswskipDF) that contains the stepwise change in angle for each triplet of points in a trajectory, skipping every n points;
         skip = 2 means, it takes every second step and calculates the skipwise change in angle;
@@ -81,10 +81,11 @@ class _AngleMixin:
         angles = [self.calc_stepwise_angle(trj_dict[trj]) for trj in trj_dict]
         idx = trj_dict.keys()
 
-        self.angleswskipDF = pd.merge(pd.DataFrame({'tr': idx, 'Angle_r': angles, 'skip': [skip] * len(idx)}), self.countDF, left_on='tr', right_on='tr', how='left').explode('Angle_r', ignore_index=True)
-        self.angleswskipDF['Angle_deg'] = self.angleswskipDF.Angle_r.apply(math.degrees)
+        angleswskipDF = pd.merge(pd.DataFrame({'tr': idx, 'Angle_r': angles, 'skip': [skip] * len(idx)}), countDF, left_on='tr', right_on='tr', how='left').explode('Angle_r', ignore_index=True)
+        angleswskipDF['Angle_deg'] = angleswskipDF.Angle_r.apply(math.degrees)
+        return angleswskipDF
 
-    def create_stepwiseangle_distanceDF(self):
+    def create_stepwiseangle_distanceDF(self, countDF):
         '''
         creates a dataframe (anglesw_distanceDF) that contains the stepwise change in angle and the stepwise displacement (initial step) for each triplet of points in a trajectory;
         basically an addition to create_stepwiseangleDF
@@ -100,8 +101,9 @@ class _AngleMixin:
         distances = [self.calc_stepwise_distance(trj_dict[trj]) for trj in trj_dict]
         idx = trj_dict.keys()
 
-        self.anglesw_distanceDF = pd.merge(pd.DataFrame({'tr': idx, 'Angle_r': angles, 'Distance': distances}), self.countDF, left_on='tr', right_on='tr', how='left').explode(['Angle_r', 'Distance'], ignore_index=True)
-        self.anglesw_distanceDF['Angle_deg'] = self.anglesw_distanceDF.Angle_r.apply(math.degrees)
+        anglesw_distanceDF = pd.merge(pd.DataFrame({'tr': idx, 'Angle_r': angles, 'Distance': distances}), countDF, left_on='tr', right_on='tr', how='left').explode(['Angle_r', 'Distance'], ignore_index=True)
+        anglesw_distanceDF['Angle_deg'] = anglesw_distanceDF.Angle_r.apply(math.degrees)
+        return anglesw_distanceDF
 
     def calc_stepwise_angle(self, trj):
             

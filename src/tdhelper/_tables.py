@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import copy
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -9,10 +7,10 @@ import pandas as pd
 class _TableMixin:
 
     def create_countDF(self):
-        self.countDF = self.data.groupby('tr', as_index=False)['t'].count().rename(columns={'t': 'Count'})
+        return self.data.groupby('tr', as_index=False)['t'].count().rename(columns={'t': 'Count'})
 
     def create_centroidDF(self):
-        self.centroidDF = self.data.groupby('tr', as_index=False).mean()[['tr', 'x', 'y']]
+        return self.data.groupby('tr', as_index=False).mean()[['tr', 'x', 'y']]
 
     def create_startendDF(self):
         data_vec = []
@@ -22,39 +20,34 @@ class _TableMixin:
             data_vec.append(list(tempDF.iloc[0, :]))
             data_vec.append(list(tempDF.iloc[-1, :]))
             
-        self.startendDF = pd.DataFrame(np.array(data_vec), columns=['tr', 'x', 'y', 't'])
+        return pd.DataFrame(np.array(data_vec), columns=['tr', 'x', 'y', 't'])
 
-    def create_surv_probDF(self, DT, plot = False):
+    def create_surv_probDF(self, DT, countDF):
         '''
         Creates surv_probDF, which contains cumulative distribution
         information about the trajectory lengths observed.
-        Requires countDF to be created prior.
 
         Parameters
         ----------
+        countDF : pandas.DataFrame
+            Output from create_countDF().
         DT : float
             Sampling rate of image acquisition.
-        plot : bool, optional
-            To plot survival probability graph or not. The default is False.
 
         Returns
         -------
-        None.
+        pandas.DataFrame
+            Survival probability information.
 
         '''
         
         # creating dataframe
-        self.surv_probDF = copy.deepcopy(self.countDF)
-        self.surv_probDF.rename(columns={'Count': 'trj_len'}, inplace=True)
-        self.surv_probDF = self.surv_probDF.groupby('trj_len', as_index=False).count().rename(columns={'tr': 'count'})
-        self.surv_probDF.sort_values('trj_len', ascending=False, inplace=True)
-        self.surv_probDF['cumsum'] = self.surv_probDF['count'].cumsum()
-        self.surv_probDF['cumsum_perc'] = self.surv_probDF['cumsum'] / self.surv_probDF['cumsum'].max() # turn to percentages
-        self.surv_probDF['trj_len_s'] = self.surv_probDF['trj_len'] * DT
-        
-        # plotting
-        if plot == True:
-            fig, ax = plt.subplots()
-            self.plot_surv_prob(ax)
-        
-        return fig, ax
+        surv_probDF = countDF.copy(deep=True)
+        surv_probDF.rename(columns={'Count': 'trj_len'}, inplace=True)
+        surv_probDF = surv_probDF.groupby('trj_len', as_index=False).count().rename(columns={'tr': 'count'})
+        surv_probDF.sort_values('trj_len', ascending=False, inplace=True)
+        surv_probDF['cumsum'] = surv_probDF['count'].cumsum()
+        surv_probDF['cumsum_perc'] = surv_probDF['cumsum'] / surv_probDF['cumsum'].max() # turn to percentages
+        surv_probDF['trj_len_s'] = surv_probDF['trj_len'] * DT
+
+        return surv_probDF

@@ -16,16 +16,16 @@ class _FilteringMixin:
         
         if max_length != None:
         
-            self.countDF = self.data.groupby('tr', as_index=False)['t'].count().rename(columns={'t': 'Count'})
-            self.countDF = self.countDF[self.countDF['Count'] >= min_length]
-            self.countDF = self.countDF[self.countDF['Count'] <= max_length]
-            self.data = self.data[self.data['tr'].isin(self.countDF['tr'])]
+            countDF = self.data.groupby('tr', as_index=False)['t'].count().rename(columns={'t': 'Count'})
+            countDF = countDF[countDF['Count'] >= min_length]
+            countDF = countDF[countDF['Count'] <= max_length]
+            self.data = self.data[self.data['tr'].isin(countDF['tr'])]
         
         else:
             
-            self.countDF = self.data.groupby('tr', as_index=False)['t'].count().rename(columns={'t': 'Count'})
-            self.countDF = self.countDF[self.countDF['Count'] >= min_length]
-            self.data = self.data[self.data['tr'].isin(self.countDF['tr'])]
+            countDF = self.data.groupby('tr', as_index=False)['t'].count().rename(columns={'t': 'Count'})
+            countDF = countDF[countDF['Count'] >= min_length]
+            self.data = self.data[self.data['tr'].isin(countDF['tr'])]
 
         print()
 
@@ -82,7 +82,7 @@ class _FilteringMixin:
         tr_id = helperDF.query('x > @xmin and x < @xmax and y > @ymin and y < @ymax').tr
         self.data = self.data[self.data['tr'].isin(tr_id)]
 
-    def filter_by_roi(self, roi, inverse=False):
+    def filter_by_roi(self, roi, centroidDF, inverse=False):
         '''
 
         Parameters
@@ -98,8 +98,7 @@ class _FilteringMixin:
 
         # quick query
         minx, miny, maxx, maxy = roi.bounds
-        self.create_centroidDF()
-        temp_data = self.centroidDF.query('x > @minx and x < @maxx and y > @miny and y < @maxy')
+        temp_data = centroidDF.query('x > @minx and x < @maxx and y > @miny and y < @maxy')
 
         # further query
         centroid_array = np.asarray(temp_data[['x', 'y']])
@@ -114,4 +113,4 @@ class _FilteringMixin:
         if not inverse:
             self.filter_by_tr(tr_list)
         elif inverse:
-            self.filter_by_tr([x for x in self.centroidDF.tr if x not in tr_list])
+            self.filter_by_tr([x for x in centroidDF.tr if x not in tr_list])

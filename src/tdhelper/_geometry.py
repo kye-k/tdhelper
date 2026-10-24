@@ -15,7 +15,7 @@ import pandas as pd
 
 class _GeometryMixin:
 
-    def create_centroidHull(self, concave = False, alpha = None):
+    def create_centroidHull(self, centroidDF, concave = False, alpha = None):
         
         def alpha_shape(points, alpha):
             """
@@ -78,18 +78,20 @@ class _GeometryMixin:
             return unary_union(triangles)
         
         # obtain Points class
-        centroidPoints = MultiPoint(self.centroidDF[['x', 'y']].values)
+        centroidPoints = MultiPoint(centroidDF[['x', 'y']].values)
         
         # calculate the convexhull 
         if concave == False:
-            self.centroidHull = centroidPoints.convex_hull
-        
+            centroidHull = centroidPoints.convex_hull
+
         elif concave == True and alpha != None:
-            self.centroidHull = alpha_shape(centroidPoints, alpha)
+            centroidHull = alpha_shape(centroidPoints, alpha)
         
         else: raise Exception('alpha not specified for concave hull')
 
-    def create_roi_towards_away_inside_angle(self, roi, buffer=False):
+        return centroidHull
+
+    def create_roi_towards_away_inside_angle(self, roi, countDF, buffer=False):
         '''
         given a ROI, determine whether a displacement in a trajectory is moving towards, away or is inside (i.e., both points are inside) the roi.
         roi; a solid polygon (no holes).
@@ -119,17 +121,19 @@ class _GeometryMixin:
         point_array_x = [trj_dict[trj][1:-1][:,0] for trj in trj_dict]
         point_array_y = [trj_dict[trj][1:-1][:,1] for trj in trj_dict]
 
-        self.RTAIangle = pd.merge(pd.DataFrame({'tr': trj_dict.keys(), 'Angle_r': angles, 'roi_towards_away': output_list, 'x': point_array_x, 'y': point_array_y}),
-                                  self.countDF,
+        RTAIangle = pd.merge(pd.DataFrame({'tr': trj_dict.keys(), 'Angle_r': angles, 'roi_towards_away': output_list, 'x': point_array_x, 'y': point_array_y}),
+                                  countDF,
                                   left_on='tr',
                                   right_on='tr',
                                   how='left').explode(['Angle_r', 'roi_towards_away', 'x', 'y'], ignore_index=True)
-        self.RTAIangle['Angle_deg'] = 180 - self.RTAIangle.Angle_r.apply(math.degrees)
+        RTAIangle['Angle_deg'] = 180 - RTAIangle.Angle_r.apply(math.degrees)
         
         # determine if a roi contains the points (note, this applies to the whole buffered region, so if its inside the buffer its inside the original roi)
         if buffer != False:
             roi_buffed = shapelybuffer(roi, buffer)
-            self.RTAIangle['in_buffer'] = np.array(list(map(lambda point: roi_buffed.contains(Point(point)), np.array(self.RTAIangle[['x', 'y']])))) * -2 + 1
+            RTAIangle['in_buffer'] = np.array(list(map(lambda point: roi_buffed.contains(Point(point)), np.array(RTAIangle[['x', 'y']])))) * -2 + 1
+
+        return RTAIangle
 
     def calc_roi_towards_away_inside(self, trj, roi):
         '''
@@ -213,7 +217,7 @@ class _GeometryMixin:
         
         '''
         
-        self.displacement_vector_dict = {}
+        displacement_vector_dict = {}
         
         for i in self.data['tr'].unique():
             
@@ -223,7 +227,9 @@ class _GeometryMixin:
             trj = np.array([trj.x, trj.y]).T.reshape(-1, 1, 2)
                         
             disp_vec = [np.sqrt((n0[0]-n1[0])**2 + (n0[1]-n1[1])**2) for n0, n1 in zip(trj[:-1, 0], trj[1:, 0])]
-            self.displacement_vector_dict[i] = disp_vec
+            displacement_vector_dict[i] = disp_vec
+
+        return displacement_vector_dict
 
     def create_displacementinfo_vector(self, roi, ax=None, **kwargs):
         '''
@@ -233,8 +239,8 @@ class _GeometryMixin:
 
         '''
         
-        self.displacement_roivector_dict = {}
-        self.displacement_roivectorinfo_dict = {}
+        displacement_roivector_dict = {}
+        displacement_roivectorinfo_dict = {}
         
         cols = kwargs.pop('cols', {True: 'Red', False: 'Black'})
         
@@ -257,5 +263,7 @@ class _GeometryMixin:
                 for n0, n1, cc in zip(trj[:-1, 0], trj[1:, 0], disp_info):
                     ax.plot([n0[0]-mean_x, n1[0]-mean_x], [n0[1]-mean_y, n1[1]-mean_y], color=cols[cc], **kwargs)
                     
-            self.displacement_roivector_dict[i] = disp_vec
-            self.displacement_roivectorinfo_dict[i] = disp_info
+            displacement_roivector_dict[i] = disp_vec
+            displacement_roivectorinfo_dict[i] = disp_info
+
+        return displacement_roivector_dict, displacement_roivectorinfo_dict

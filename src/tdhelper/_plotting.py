@@ -3,7 +3,7 @@
 from matplotlib import ticker
 from scipy.stats import binned_statistic_2d
 from scipy.stats import gaussian_kde
-from scipy.stats import sem
+
 import copy
 import matplotlib.cm as cm
 import matplotlib.colors as mplcolors
@@ -12,6 +12,7 @@ import numpy as np
 import plotly.express as px
 import plotly.io as pio
 import seaborn as sns
+from ._msd import calc_diffusion_coefficient, calc_mean_msd
 pio.renderers.default = 'browser'
 
 
@@ -192,12 +193,14 @@ class _PlottingMixin:
                         linewidth=linewidth,
                         alpha=alpha)
 
-    def plot_trajectories_diff_v2(self, ax, **kwargs):
+    def plot_trajectories_diff_v2(self, ax, difflog_dict=None, DT=None, fit_len=4, dimensions=2, **kwargs):
         """
         function: plots trajectories using matplolib background ~ color by diffusion coefficient
 
         arguments:
             ax: axis to plot onto
+            difflog_dict: optional log10 diffusion coefficients keyed by trajectory ID
+            DT: required when diffusion coefficients should be calculated from self.data
             
         """
         
@@ -207,6 +210,14 @@ class _PlottingMixin:
         vmin = kwargs.pop('vmin', -5)
         vmax = kwargs.pop('vmax', 1)
         save_cbar = kwargs.pop('save_cbar', None)
+
+        if difflog_dict is None:
+            if DT is None:
+                raise ValueError("Provide difflog_dict or DT to calculate diffusion coefficients.")
+            msd_dict = self.calc_MSD()
+            _, difflog_dict, _, _ = calc_diffusion_coefficient(
+                msd_dict, DT, fit_len=fit_len, dimensions=dimensions
+            )
         
         # get data
         data_to_plot = copy.deepcopy(self.data)
@@ -218,7 +229,7 @@ class _PlottingMixin:
         norm = mplcolors.Normalize(vmin=vmin, vmax=vmax, clip=False)
         
         # sorting
-        sorted_difflog_dict = {k: v for k, v in sorted(self.difflog_dict.items(), key=lambda item: item[1], reverse=True)}
+        sorted_difflog_dict = {k: v for k, v in sorted(difflog_dict.items(), key=lambda item: item[1], reverse=True)}
         
         # plotting
         for tr_id, dcoef in sorted_difflog_dict.items():
@@ -353,7 +364,7 @@ class _PlottingMixin:
                           selector=dict(mode='markers'))
         fig.show()
 
-    def plot_scatter(self, ax, centroids = False, **kwargs):
+    def plot_scatter(self, ax, centroids = False, centroidDF=None, **kwargs):
         xlim = kwargs.get('xlim', None)
         ylim = kwargs.get('ylim', None)
         alpha = kwargs.get('alpha', 0.3)
@@ -362,7 +373,9 @@ class _PlottingMixin:
         if centroids == False:
             sns.scatterplot(x='x', y='y', ax=ax, data=self.data, **kwargs)
         else:
-            sns.scatterplot(x='x', y='y', ax=ax, data=self.centroidDF, **kwargs)
+            if centroidDF is None:
+                raise ValueError("centroidDF is required when centroids=True.")
+            sns.scatterplot(x='x', y='y', ax=ax, data=centroidDF, **kwargs)
         
         if xlim and ylim != None:
             ax.set_ylim(ylim)
@@ -446,17 +459,17 @@ class _PlottingMixin:
             cbar.set_label('Density')
             figbar.savefig('cbar.svg') 
 
-    def plot_centroids_kde(self, ax, bw_method, **kwargs):
+    def plot_centroids_kde(self, ax, centroidDF, bw_method, **kwargs):
         
         print('estimating kde...')
-        xy = np.vstack([self.centroidDF['x'], self.centroidDF['y']])
+        xy = np.vstack([centroidDF['x'], centroidDF['y']])
         gaus = gaussian_kde(xy, bw_method=bw_method)(xy)
         print('kde estimation complete...')
         
-        ax.scatter(self.centroidDF['x'], self.centroidDF['y'], c=gaus, **kwargs)
+        ax.scatter(centroidDF['x'], centroidDF['y'], c=gaus, **kwargs)
         ax.set_aspect('equal')
 
-    def plot_countfreq(self, ax, **kwargs):
+    def plot_countfreq(self, ax, countDF, **kwargs):
         '''
         plots frequency distribution for trajectory lengths
         reqires; countDF
@@ -466,37 +479,38 @@ class _PlottingMixin:
         bins = kwargs.get('bins', None)
         
         if bins == None:
-            ax.hist(self.countDF['Count'], bins=max(self.countDF['Count']))
+            ax.hist(countDF['Count'], bins=max(countDF['Count']))
         else:
-            ax.hist(self.countDF['Count'], bins=bins)
+            ax.hist(countDF['Count'], bins=bins)
 
-        ax.text(0, 0, 'mean {}, med {}'.format(self.countDF['Count'].mean(),
-                                               self.countDF['Count'].median()))
+        ax.text(0, 0, 'mean {}, med {}'.format(countDF['Count'].mean(),
+                                               countDF['Count'].median()))
         ax.set_box_aspect(1)
         ax.set_xlabel('Count')
         ax.set_ylabel('Freq')
 
-    def plot_centroidHull(self, ax):
-        ax.plot(*self.centroidHull.exterior.xy, color='grey', alpha=0.4)
+    def plot_centroidHull(self, ax, centroidHull):
+        ax.plot(*centroidHull.exterior.xy, color='grey', alpha=0.4)
 
-    def plot_msds(self, ax, DT = None, **kwargs):
+    def plot_msds(self, ax, msd_list, DT = None, **kwargs):
 
         '''
-        function; plots the msds for all trajectories within self.data (note, msds_list must have been calculated prior)
+        function; plots the supplied MSD curves
         ax; specify axis to plot on
+        msd_list; MSD curves, such as list(calc_MSD().values())
         DT; if None, then plots with no time information, if specified float, then will these times...
 
         '''
         
         if DT == None:
         
-            for i in self.msd_list:
+            for i in msd_list:
                 x = np.arange(0, len(i))
                 ax.plot(x[1:], i[1:], **kwargs) # note, first index contains 0
                 ax.set_xlabel('Time (frame)')  
         
         else:
-            for i in self.msd_list:
+            for i in msd_list:
                 x = np.arange(0, len(i)) * DT
                 ax.plot(x[1:], i[1:], **kwargs) # note, first index contains 0
                 ax.set_xlabel('Time (s)')  
@@ -504,11 +518,12 @@ class _PlottingMixin:
         ax.set_box_aspect(1)
         ax.set_ylabel(r'MSD ($\mu$m$^2$)')
 
-    def plot_mean_msds(self, ax, plot_x_limit, DT, **kwargs):
+    def plot_mean_msds(self, ax, msd_list, plot_x_limit, DT, **kwargs):
 
         '''
-        function; plots the mean msds for all trajectories within self.data (note, msds_list must have been calculated prior)
+        function; plots the mean of the supplied MSD curves
         ax; specify axis to plot on
+        msd_list; MSD curves, such as list(calc_MSD().values())
         plot_x_limit; specify maximum t value to plot (in frames)
         DT; delta T for acquisition
         
@@ -521,22 +536,8 @@ class _PlottingMixin:
         label = kwargs.get('label', 'none')
         linestyle = kwargs.get('linestyle', 'solid')
         
-        # length of longest list (or trajectory)
-        max_length = np.max([len(i) for i in self.msd_list])
-
-        # create vector to store mean and sem values
-        mean_values = np.zeros(max_length)
-        sem_values = np.zeros(max_length)
-
-        # calculate for all... 
-        for i in range(0, max_length):
-            vector = []
-            for msd_vals in self.msd_list:
-                if i < len(msd_vals):
-                    vector.append(msd_vals[i])
-                
-            mean_values[i] = np.mean(vector)
-            sem_values[i] = sem(vector)
+        mean_values, sem_values = calc_mean_msd(msd_list)
+        max_length = len(mean_values)
         
         ax.errorbar(np.arange(0, max_length)[1:plot_x_limit] * DT, mean_values[1:plot_x_limit], yerr=sem_values[1:plot_x_limit], color=color,
                     label=label, linestyle=linestyle, marker='o', markeredgecolor='white')
@@ -544,7 +545,7 @@ class _PlottingMixin:
         ax.set_xlabel('Time (sec)')
         ax.set_ylabel(r'MSD ($\mu$m$^2$)')
 
-    def plot_surv_prob(self, ax, **kwargs):
+    def plot_surv_prob(self, ax, surv_probDF, **kwargs):
         '''
         Plot survival probability information.
 
@@ -552,6 +553,8 @@ class _PlottingMixin:
         ----------
         ax : matplotlib.pyplot.axis
             Axis to plot onto.
+        surv_probDF : pandas.DataFrame
+            Output from create_surv_probDF().
 
         Returns
         -------
@@ -562,7 +565,7 @@ class _PlottingMixin:
         # sns.scatterplot(data=self.surv_probDF, x='trj_len_s', y='cumsum_perc',
         #                 ax=ax, **kwargs)
         
-        ax.step(data=self.surv_probDF, x='trj_len_s', y='cumsum_perc', **kwargs)
+        ax.step(data=surv_probDF, x='trj_len_s', y='cumsum_perc', **kwargs)
         
         
         ax.set(xscale='log')
