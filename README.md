@@ -9,26 +9,6 @@ As of now, `tdhelper` has very simple functions, contributions to enhance use an
 
 See `example_notebook.ipynb` for example use of `tdhelper`.
 
-## Working with analysis results
-
-Analysis results are returned instead of being saved as attributes on a `TrajectoryData` object. Pass a result explicitly to operations that use it:
-
-```python
-from tdhelper import TrajectoryData, calc_diffusion_coefficient
-
-tracks = TrajectoryData()
-tracks.import_trc(fname, pixel_size)
-
-counts = tracks.create_countDF()
-angles = tracks.create_angleDF(counts)
-
-msds = tracks.calc_MSD()
-diff_dict, difflog_dict, diff_list, difflog_list = calc_diffusion_coefficient(msds, DT)
-tracks.plot_trajectories_diff_v2(ax, difflog_dict=difflog_dict)
-```
-
-Diffusion calculations are standalone functions because they use only the supplied MSD results and parameters. For convenience, diffusion-colored plotting can calculate coefficients from the trajectories directly when given `DT`: `tracks.plot_trajectories_diff_v2(ax, DT=DT)`.
-
 ## Install 
 
 ```

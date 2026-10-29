@@ -74,8 +74,6 @@ def calc_diffusion_coefficient(msd_dict, DT, fit_len = 4, dimensions = 2):
     '''
 
     diff_dict = {}
-    difflog_dict = {}
-
     for i in msd_dict.keys():
 
         # perform linear regression and calculate slope
@@ -87,23 +85,19 @@ def calc_diffusion_coefficient(msd_dict, DT, fit_len = 4, dimensions = 2):
             value = 10 ** -5
 
         diff_dict[i] = value
-        difflog_dict[i] = np.log10(value)
 
-    diff_list = np.array(list(diff_dict.values()))
-    difflog_list = np.array(list(difflog_dict.values()))
-
-    return diff_dict, difflog_dict, diff_list, difflog_list
+    return diff_dict
 
 
-def calc_immobile_fraction(diff_list, dcoef_thresh):
+def calc_immobile_fraction(diff_dict, dcoef_thresh):
     '''
     determines the proportion (0 to 1) of molecules classified as 'immobile' based on threshold
 
     '''
 
-    if len(diff_list) > 0:
-        imm = diff_list < dcoef_thresh
-        proportion_immobile = sum(imm) / len(diff_list)
+    if len(diff_dict) > 0:
+        imm = np.array(list(diff_dict.values())) < dcoef_thresh
+        proportion_immobile = sum(imm) / len(diff_dict)
 
     else:
         proportion_immobile = None

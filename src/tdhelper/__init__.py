@@ -5,6 +5,7 @@ from ._msd import (
     calc_msd,
     calc_msdauc,
 )
+
 from .core import TrajectoryData
 
 __all__ = [
