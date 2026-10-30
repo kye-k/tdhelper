@@ -209,11 +209,16 @@ class _GeometryMixin:
 
     def create_displacement_vector(self):
         '''
-        for each trajectory, calculate the displacement between each step and return dictionary
+        Calculates the displacements between each step of for all trajectories.
+
+        Returns
+        -------
+        dict :
+            Dictionary of displacements between each step of a trajectory, with trajectory ID as keys.
         
         '''
         
-        self.displacement_vector_dict = {}
+        displacement_vector_dict = {}
         
         for i in self.data['tr'].unique():
             
@@ -223,7 +228,9 @@ class _GeometryMixin:
             trj = np.array([trj.x, trj.y]).T.reshape(-1, 1, 2)
                         
             disp_vec = [np.sqrt((n0[0]-n1[0])**2 + (n0[1]-n1[1])**2) for n0, n1 in zip(trj[:-1, 0], trj[1:, 0])]
-            self.displacement_vector_dict[i] = disp_vec
+            displacement_vector_dict[i] = disp_vec
+
+        return displacement_vector_dict
 
     def create_displacementinfo_vector(self, roi, ax=None, **kwargs):
         '''

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import cmocean
 import math
 import numpy as np
 import pandas as pd
