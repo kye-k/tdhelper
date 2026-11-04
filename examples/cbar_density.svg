@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-30T15:39:10.055729</dc:date>
+    <dc:date>2026-11-04T15:06:38.050828</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -38,18 +38,18 @@ z
 " style="fill: #ffffff"/>
    </g>
    <image xlink:href="data:image/png;base64,
-iVBORw0KGgoAAAANSUhEUgAAAAYAAAAtCAYAAACNpxq9AAAAaUlEQVR4nK2USwpAIQwDnyDe/7b2Z/su0CwCdemQiaXgqqr6mrMzs7v/9nuPBEmrImIq4e6kylHCEQi63MymOkSkB6pKlsucyhBQpHI0uaKE0iqjn2tz4N7bAzgH3Aev4gG9wXXOaf+SH2fVg+azpvWXAAAAAElFTkSuQmCC" id="image4383326ba1" transform="scale(1 -1) translate(0 -32.4)" x="4.32" y="-2.16" width="4.32" height="32.4"/>
+iVBORw0KGgoAAAANSUhEUgAAAAYAAAAtCAYAAACNpxq9AAAAaUlEQVR4nK2USwpAIQwDnyDe/7b2Z/su0CwCdemQiaXgqqr6mrMzs7v/9nuPBEmrImIq4e6kylHCEQi63MymOkSkB6pKlsucyhBQpHI0uaKE0iqjn2tz4N7bAzgH3Aev4gG9wXXOaf+SH2fVg+azpvWXAAAAAElFTkSuQmCC" id="image9dbc1de2cf" transform="scale(1 -1) translate(0 -32.4)" x="4.32" y="-2.16" width="4.32" height="32.4"/>
    <g id="matplotlib.axis_1"/>
    <g id="matplotlib.axis_2">
     <g id="ytick_1">
      <g id="line2d_1">
       <defs>
-       <path id="mb1a2784cb7" d="M 0 0 
+       <path id="m4b2f1ae200" d="M 0 0 
 L 3.5 0 
 " style="stroke: #000000; stroke-width: 0.8"/>
       </defs>
       <g>
-       <use xlink:href="#mb1a2784cb7" x="8.64" y="34.2" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m4b2f1ae200" x="8.64" y="34.2" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_1">
@@ -95,7 +95,7 @@ z
     <g id="ytick_2">
      <g id="line2d_2">
       <g>
-       <use xlink:href="#mb1a2784cb7" x="8.64" y="7.2" style="stroke: #000000; stroke-width: 0.8"/>
+       <use xlink:href="#m4b2f1ae200" x="8.64" y="7.2" style="stroke: #000000; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_2">

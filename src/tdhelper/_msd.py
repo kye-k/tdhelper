@@ -115,7 +115,7 @@ class _MSDMixin:
         
         return trapezoid(msd_mean_values[p1:p2], dx=DT)
 
-    def calc_DCOEF(self, msd_dict, DT, fit_len=4, dimensions=2):
+    def calc_DCOEF(self, DT, msd_dict=None, fit_len=4, dimensions=2):
         '''
         Calculate the diffusion coefficient for each trajectory via performing linear regression on its MSD curve.
         Diffusion coefficients are calculated in the same way as PALMTracer (https://github.com/jbsiba/PALMTracer).
@@ -124,7 +124,7 @@ class _MSDMixin:
         Parameters
         ----------
         msd_dict: dict
-            Dictionary of MSD curves for each trajectory (from calc_MSD).
+            Dictionary of MSD curves for each trajectory (from calc_MSD). If None, then calc_MSD is called to calculate MSD curves.
         DT : float
             Time interval between acquisition frames (seconds).
         fit_len : int, optional
@@ -138,7 +138,10 @@ class _MSDMixin:
             Dictionary of diffusion coefficients (um2/s), where the key is trajectory ID.
 
         '''
-        
+
+        if msd_dict is None:
+            msd_dict = self.calc_MSD()
+
         dcoef_dict = {}
 
         for i in msd_dict.keys():

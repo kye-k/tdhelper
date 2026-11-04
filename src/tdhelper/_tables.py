@@ -22,7 +22,7 @@ class _TableMixin:
             data_vec.append(list(tempDF.iloc[0, :]))
             data_vec.append(list(tempDF.iloc[-1, :]))
             
-        self.startendDF = pd.DataFrame(np.array(data_vec), columns=['tr', 'x', 'y', 't'])
+        return pd.DataFrame(np.array(data_vec), columns=['tr', 'x', 'y', 't'])
 
     def create_surv_probDF(self, DT, plot = False):
         '''

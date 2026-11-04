@@ -78,8 +78,8 @@ class _FilteringMixin:
 
         '''
         
-        helperDF = self.data.groupby('tr').mean().reset_index()
-        tr_id = helperDF.query('x > @xmin and x < @xmax and y > @ymin and y < @ymax').tr
+        tempDF = self.data.groupby('tr').mean().reset_index()
+        tr_id = tempDF.query('x > @xmin and x < @xmax and y > @ymin and y < @ymax').tr
         self.data = self.data[self.data['tr'].isin(tr_id)]
 
     def filter_by_roi(self, roi, inverse=False):
